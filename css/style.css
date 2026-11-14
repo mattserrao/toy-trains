@@ -1,0 +1,123 @@
+:root {
+  --ink: #f4efe6;
+  --ink-dim: #c9c0b1;
+  --panel: rgba(28, 26, 23, 0.78);
+  --line: rgba(255, 255, 255, 0.14);
+  --accent: #e7b84a;
+  --good: #7fc58b;
+  --bad: #e07a6a;
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; overflow: hidden; background: #1d1f22; color: var(--ink); overscroll-behavior: none; }
+/* No double-tap or pinch zoom of the page itself: gestures belong to the 3D view. */
+html, body, button, input, .panel { touch-action: manipulation; -webkit-tap-highlight-color: transparent; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+canvas#scene { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+
+.panel {
+  position: fixed;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35);
+}
+.hidden { display: none !important; }
+
+#topbar {
+  top: max(10px, env(safe-area-inset-top));
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px 6px 14px;
+  white-space: nowrap;
+}
+.brand { font-weight: 700; letter-spacing: 0.02em; }
+.brand span { font-weight: 400; color: var(--ink-dim); font-size: 12px; margin-left: 4px; }
+
+.seg { display: flex; background: rgba(255,255,255,0.06); border-radius: 10px; padding: 2px; }
+.seg button, .pill {
+  appearance: none;
+  border: 0;
+  color: var(--ink);
+  background: transparent;
+  font: inherit;
+  font-size: 14px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  min-height: 36px;
+}
+.seg button.on { background: var(--accent); color: #1b1712; font-weight: 600; }
+.pill { background: rgba(255,255,255,0.08); border: 1px solid var(--line); }
+.pill:hover, .seg button:hover:not(.on) { background: rgba(255,255,255,0.14); }
+.pill.on { background: var(--accent); color: #1b1712; font-weight: 600; }
+.pill.danger { color: #ffd2c9; }
+.pill:disabled { opacity: 0.4; cursor: default; }
+
+#buildPanel {
+  top: 70px;
+  left: max(10px, env(safe-area-inset-left));
+  width: 240px;
+  padding: 12px;
+}
+.panel-title { font-weight: 700; margin-bottom: 4px; }
+.hint { color: var(--ink-dim); font-size: 13px; margin: 0 0 10px; line-height: 1.35; }
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 8px; }
+.grid .pill { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 6px; font-size: 12px; }
+.grid .pill svg { width: 42px; height: 26px; }
+.row { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
+.row .pill { flex: 1; }
+
+#cabPanel {
+  right: max(10px, env(safe-area-inset-right));
+  bottom: max(10px, env(safe-area-inset-bottom));
+  width: 250px;
+  padding: 12px;
+}
+.speedo { display: flex; align-items: baseline; gap: 8px; margin-bottom: 6px; }
+.speed-num { font-size: 34px; font-weight: 700; font-variant-numeric: tabular-nums; min-width: 2.2ch; }
+.speed-unit { color: var(--ink-dim); font-size: 13px; }
+.throttle label { font-size: 13px; color: var(--ink-dim); }
+.throttle input { width: 100%; accent-color: var(--accent); height: 28px; }
+.status { font-size: 12px; color: var(--ink-dim); min-height: 16px; margin-top: 8px; }
+
+.toast {
+  position: fixed;
+  left: 50%;
+  top: 76px;
+  transform: translateX(-50%) translateY(-6px);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-size: 14px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s, transform 0.25s;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+#loading {
+  position: fixed; inset: 0; display: grid; place-items: center;
+  background: #1d1f22; z-index: 10; transition: opacity 0.5s;
+}
+#loading.done { opacity: 0; pointer-events: none; }
+.loading-card { text-align: center; }
+.loading-card .brand { font-size: 28px; }
+.loading-card .sub { color: var(--ink-dim); margin-top: 6px; }
+
+@media (max-width: 720px) {
+  #topbar { left: 8px; right: 8px; transform: none; flex-wrap: wrap; justify-content: center; padding: 6px; }
+  #topbar .brand { display: none; }
+  .seg button, .pill { padding: 7px 9px; font-size: 13px; }
+  #buildPanel { top: auto; bottom: 10px; left: 8px; width: calc(100% - 16px - 0px); max-width: 340px; }
+  #buildPanel .grid { grid-template-columns: repeat(3, 1fr); }
+  #cabPanel { width: 200px; }
+  body.building #cabPanel { display: none; }
+  .toast { top: 110px; }
+}

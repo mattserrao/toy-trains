@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <title>ToyTrains</title>
+  <meta name="description" content="Build a tabletop model railroad, then watch it run or ride along in the cab." />
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="css/style.css" />
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "./vendor/three/build/three.module.js",
+        "three/addons/": "./vendor/three/addons/"
+      }
+    }
+  </script>
+</head>
+<body>
+  <canvas id="scene"></canvas>
+
+  <div id="loading">
+    <div class="loading-card">
+      <div class="brand">ToyTrains</div>
+      <div class="sub">Setting up the layout…</div>
+    </div>
+  </div>
+
+  <header id="topbar" class="panel">
+    <div class="brand">ToyTrains <span id="version"></span></div>
+    <div class="seg" id="modeSeg">
+      <button data-mode="run" class="on" title="Run mode (B toggles)">Run</button>
+      <button data-mode="build" title="Build mode (B toggles)">Build</button>
+    </div>
+    <div class="seg" id="camSeg">
+      <button data-cam="orbit" class="on" title="Orbit camera (1)">Orbit</button>
+      <button data-cam="follow" title="Follow camera (2)">Follow</button>
+      <button data-cam="cab" title="Ride in the cab (3)">Cab</button>
+    </div>
+    <button id="nightBtn" class="pill" title="Day / night (N)">Day</button>
+    <button id="soundBtn" class="pill" title="Sound on/off (M)">Sound off</button>
+  </header>
+
+  <section id="buildPanel" class="panel hidden">
+    <div class="panel-title">Track</div>
+    <p class="hint" id="buildHint">Tap a glowing open end, then add a piece.</p>
+    <div class="grid" id="pieceButtons"></div>
+    <div class="row">
+      <button id="removeBtn" class="pill" title="Tap a track piece to remove it">Remove piece</button>
+      <button id="undoBtn" class="pill" title="Undo (Ctrl+Z)">Undo</button>
+    </div>
+    <div class="row">
+      <button id="resetBtn" class="pill danger">Reset to oval</button>
+    </div>
+  </section>
+
+  <section id="cabPanel" class="panel">
+    <div class="speedo">
+      <div class="speed-num" id="speedNum">0</div>
+      <div class="speed-unit">scale mph</div>
+    </div>
+    <div class="throttle">
+      <label for="throttle">Throttle</label>
+      <input id="throttle" type="range" min="0" max="100" value="0" />
+    </div>
+    <div class="row">
+      <button id="dirBtn" class="pill" title="Direction (R)">Forward</button>
+      <button id="stopBtn" class="pill" title="Stop (Space)">Stop</button>
+      <button id="whistleBtn" class="pill" title="Hold for whistle (H)">Whistle</button>
+    </div>
+    <div class="status" id="status"></div>
+  </section>
+
+  <div id="toast" class="toast"></div>
+
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>

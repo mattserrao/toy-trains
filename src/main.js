@@ -20,7 +20,7 @@ for (const ev of ['gesturestart', 'gesturechange', 'gestureend']) document.addEv
 let lastTouchEnd = 0;
 document.addEventListener('touchend', (e) => {
   const now = performance.now();
-  if (now - lastTouchEnd < 350 && e.target.tagName !== 'INPUT') e.preventDefault();
+  if (now - lastTouchEnd < 350 && !e.target.closest('button, input')) e.preventDefault();
   lastTouchEnd = now;
 }, { passive: false });
 document.getElementById('version').textContent = `v${VERSION}`;

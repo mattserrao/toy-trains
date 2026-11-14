@@ -11,7 +11,18 @@ import { BuildTool } from './build.js';
 import { TrainAudio } from './audio.js';
 import { loadLayout, saveLayout, clearLayout } from './storage.js';
 
-export const VERSION = '0.1.0';
+export const VERSION = '0.1.1';
+
+// Stop the browser from zooming the page on double-tap or pinch (iOS ignores
+// the viewport hint), so taps on buttons and the scene stay taps.
+document.addEventListener('dblclick', (e) => e.preventDefault(), { passive: false });
+for (const ev of ['gesturestart', 'gesturechange', 'gestureend']) document.addEventListener(ev, (e) => e.preventDefault(), { passive: false });
+let lastTouchEnd = 0;
+document.addEventListener('touchend', (e) => {
+  const now = performance.now();
+  if (now - lastTouchEnd < 350 && e.target.tagName !== 'INPUT') e.preventDefault();
+  lastTouchEnd = now;
+}, { passive: false });
 document.getElementById('version').textContent = `v${VERSION}`;
 
 // Renderer and scene.

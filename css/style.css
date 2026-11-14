@@ -10,7 +10,9 @@
 }
 
 * { box-sizing: border-box; }
-html, body { margin: 0; height: 100%; overflow: hidden; background: #1d1f22; color: var(--ink); }
+html, body { margin: 0; height: 100%; overflow: hidden; background: #1d1f22; color: var(--ink); overscroll-behavior: none; }
+/* No double-tap or pinch zoom of the page itself: gestures belong to the 3D view. */
+html, body, button, input, .panel { touch-action: manipulation; -webkit-tap-highlight-color: transparent; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
 canvas#scene { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
 
 .panel {

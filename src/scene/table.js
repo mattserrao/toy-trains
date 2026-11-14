@@ -1,7 +1,8 @@
 // The layout table, the show hall around it, and the lights.
 import * as THREE from 'three';
 import { TABLE } from '../track/layout.js';
-import { grassTexture, woodTexture, backdropTexture, concreteTexture } from './textures.js';
+import { woodTexture, backdropTexture, concreteTexture } from './textures.js';
+import { BASE_DEPTH } from './terrain.js';
 
 export const TABLE_TOP = 0.76; // meters above the hall floor
 
@@ -10,19 +11,9 @@ export function buildHall(scene) {
   const group = new THREE.Group();
   group.name = 'hall';
 
-  // Table top with ground cover.
-  const ground = new THREE.Mesh(
-    new THREE.BoxGeometry(W, 0.02, D),
-    [
-      new THREE.MeshStandardMaterial({ color: 0x6b5a45 }),
-      new THREE.MeshStandardMaterial({ color: 0x6b5a45 }),
-      new THREE.MeshStandardMaterial({ map: grassTexture(), roughness: 1 }),
-      new THREE.MeshStandardMaterial({ color: 0x3b3328 }),
-      new THREE.MeshStandardMaterial({ color: 0x6b5a45 }),
-      new THREE.MeshStandardMaterial({ color: 0x6b5a45 }),
-    ],
-  );
-  ground.position.set(0, T - 0.01, 0);
+  // Base board under the sculpted terrain.
+  const ground = new THREE.Mesh(new THREE.BoxGeometry(W, 0.02, D), new THREE.MeshStandardMaterial({ color: 0x3b3328 }));
+  ground.position.set(0, T - BASE_DEPTH - 0.012, 0);
   ground.receiveShadow = true;
   ground.name = 'ground';
   group.add(ground);
@@ -51,10 +42,8 @@ export function buildHall(scene) {
 
   // Painted sky backdrop along the back edge.
   const bh = 0.42;
-  const backdrop = new THREE.Mesh(
-    new THREE.PlaneGeometry(W, bh),
-    new THREE.MeshStandardMaterial({ map: backdropTexture(), roughness: 0.95 }),
-  );
+  const backdropMat = new THREE.MeshStandardMaterial({ map: backdropTexture(), roughness: 0.95 });
+  const backdrop = new THREE.Mesh(new THREE.PlaneGeometry(W, bh), backdropMat);
   backdrop.position.set(0, T + bh / 2 - 0.005, -D / 2 - 0.004);
   backdrop.receiveShadow = true;
   group.add(backdrop);
@@ -143,5 +132,5 @@ export function buildHall(scene) {
   sun.shadow.radius = 3;
   scene.add(sun, sun.target);
 
-  return { group, ground, sun, lamps };
+  return { group, ground, sun, hemi, lamps, fasciaMat, backdropMat };
 }

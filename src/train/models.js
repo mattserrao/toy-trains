@@ -139,7 +139,7 @@ export function buildSteamLoco() {
     wheels,
     rods,
     stackTop: new THREE.Vector3(0.072, 0.065, 0),
-    cab: new THREE.Vector3(-0.019, 0.053, 0.0168),
+    cab: new THREE.Vector3(-0.02, 0.056, 0.0235),
     headlight: new THREE.Vector3(0.082, 0.05, 0),
   };
   return finish(g);

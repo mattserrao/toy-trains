@@ -10,13 +10,14 @@ const ACCEL = 0.05; // m/s^2
 const BRAKE = 0.16;
 const RAIL_JOINT = 0.137; // a 39 ft rail at HO size
 
-class Smoke {
-  constructor(scene) {
+export class Smoke {
+  constructor(scene, count = 90) {
+    this.scene = scene;
     this.tex = puffTexture();
     this.pool = [];
     this.group = new THREE.Group();
     scene.add(this.group);
-    for (let i = 0; i < 90; i++) {
+    for (let i = 0; i < count; i++) {
       const m = new THREE.SpriteMaterial({ map: this.tex, color: 0xffffff, transparent: true, opacity: 0, depthWrite: false });
       const s = new THREE.Sprite(m);
       s.visible = false;
@@ -37,6 +38,10 @@ class Smoke {
     p.size = size;
     p.grow = grow;
     p.alpha = alpha;
+  }
+  dispose() {
+    this.scene.remove(this.group);
+    for (const p of this.pool) p.sprite.material.dispose();
   }
   update(dt) {
     for (const p of this.pool) {
@@ -82,6 +87,7 @@ export class Train {
     hl.position.copy(loco.userData.headlight);
     hl.target.position.copy(loco.userData.headlight).add(new THREE.Vector3(0.5, -0.03, 0));
     loco.add(hl, hl.target);
+    this.headlight = hl;
 
     // Offsets from the head (front of loco) to each truck.
     let f = 0;

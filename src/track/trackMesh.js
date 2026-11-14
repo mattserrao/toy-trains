@@ -42,7 +42,7 @@ function samplesFor(piece, step) {
 }
 
 // Sweep a 2D profile (lateral offset, height) along samples into a mesh.
-function sweep(samples, profile, lateral, baseY, { uvScale = 0.06, closeEnds = false } = {}) {
+export function sweep(samples, profile, lateral, baseY, { uvScale = 0.06, closeEnds = false } = {}) {
   const pos = [], uv = [], idx = [];
   const m = profile.length;
   // Profile lengths for u coordinate.
@@ -80,7 +80,7 @@ function sweep(samples, profile, lateral, baseY, { uvScale = 0.06, closeEnds = f
   return g;
 }
 
-export function buildTrack(layout, tableTop) {
+export function buildTrack(layout, tableTop, { classify } = {}) {
   materials();
   const group = new THREE.Group();
   group.name = 'track';
@@ -92,10 +92,28 @@ export function buildTrack(layout, tableTop) {
 
   for (const piece of layout.pieces) {
     const fine = samplesFor(piece, 0.01);
-    const ballast = new THREE.Mesh(sweep(fine, BALLAST_PROFILE, 0, tableTop + 0.0002, { uvScale: 0.05 }), ballastMat);
-    ballast.receiveShadow = true;
-    ballast.userData.pieceId = piece.id;
-    group.add(ballast);
+    // Ballast everywhere except on bridge decks.
+    const runs = [];
+    let run = [];
+    for (const sm of fine) {
+      if (classify && classify(sm.x, sm.y) === 'bridge') {
+        if (run.length > 1) runs.push(run);
+        run = [];
+      } else run.push(sm);
+    }
+    if (run.length > 1) runs.push(run);
+    for (const r0 of runs) {
+      const ballast = new THREE.Mesh(sweep(r0, BALLAST_PROFILE, 0, tableTop + 0.0002, { uvScale: 0.05 }), ballastMat);
+      ballast.receiveShadow = true;
+      ballast.userData.pieceId = piece.id;
+      group.add(ballast);
+    }
+    // Invisible pick strip so bridge track can still be selected in build mode.
+    if (runs.length !== 1 || runs[0].length !== fine.length) {
+      const pick = new THREE.Mesh(sweep(fine, [[-0.02, 0.004], [0.02, 0.004]], 0, tableTop), new THREE.MeshBasicMaterial({ visible: false, side: THREE.DoubleSide }));
+      pick.userData.pieceId = piece.id;
+      group.add(pick);
+    }
 
     const railBase = tableTop + BALLAST_H + TIE_H;
     for (const side of [-1, 1]) {

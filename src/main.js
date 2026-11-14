@@ -4,6 +4,10 @@ import { Layout } from './track/layout.js';
 import { buildTrack, disposeGroup } from './track/trackMesh.js';
 import { buildHall, TABLE_TOP } from './scene/table.js';
 import { buildScenery } from './scene/scenery.js';
+import { Terrain } from './scene/terrain.js';
+import { buildBridges, buildTunnels } from './scene/landmarks.js';
+import { nightMaterials } from './scene/buildings.js';
+import { riverGorge, buildRiverGorge } from './theme/riverGorge.js';
 import { buildSteamLoco, buildTender, buildBoxcar, buildCaboose } from './train/models.js';
 import { Train } from './train/train.js';
 import { CameraRig } from './cameras.js';
@@ -11,7 +15,7 @@ import { BuildTool } from './build.js';
 import { TrainAudio } from './audio.js';
 import { loadLayout, saveLayout, clearLayout } from './storage.js';
 
-export const VERSION = '0.1.1';
+export const VERSION = '0.2.0';
 
 // Stop the browser from zooming the page on double-tap or pinch (iOS ignores
 // the viewport hint), so taps on buttons and the scene stay taps.
@@ -44,22 +48,39 @@ scene.environmentIntensity = 0.35;
 
 const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.01, 60);
 
-buildHall(scene);
+const hall = buildHall(scene);
+const theme = riverGorge;
 
 // Layout, track and scenery.
 let layout = loadLayout() || Layout.defaultOval();
 if (!layout.pieces.length) layout = Layout.defaultOval();
-let track = buildTrack(layout, TABLE_TOP);
-let scenery = buildScenery(layout, TABLE_TOP);
-scene.add(track, scenery);
+let terrain, terrainGroup, track, bridges, tunnels, scenery, world;
+function buildWorld() {
+  terrain = new Terrain(theme, layout, TABLE_TOP);
+  terrainGroup = terrain.buildMesh(hall.fasciaMat);
+  track = buildTrack(layout, TABLE_TOP, { classify: (x, y) => terrain.classify(x, y) });
+  bridges = buildBridges(layout, terrain, TABLE_TOP);
+  tunnels = buildTunnels(layout, terrain, TABLE_TOP);
+  scenery = buildScenery(layout, TABLE_TOP, terrain, theme);
+  scene.add(terrainGroup, track, bridges, tunnels, scenery);
+  world = buildRiverGorge(scene, terrain, layout, TABLE_TOP);
+}
+function clearWorld() {
+  for (const g of [terrainGroup, track, bridges, tunnels, scenery]) {
+    scene.remove(g);
+    disposeGroup(g);
+  }
+  world.dispose();
+  disposeGroup(world.group);
+  nightMaterials.clear();
+}
+let night = 0;
+buildWorld();
 
 function rebuildWorld() {
-  scene.remove(track, scenery);
-  disposeGroup(track);
-  disposeGroup(scenery);
-  track = buildTrack(layout, TABLE_TOP);
-  scenery = buildScenery(layout, TABLE_TOP);
-  scene.add(track, scenery);
+  clearWorld();
+  buildWorld();
+  applyNight(night);
   train.setLayout(layout);
   build.refresh();
   saveLayout(layout);
@@ -71,6 +92,31 @@ const train = new Train(scene, layout, [buildSteamLoco(), buildTender(), buildBo
 
 // Cameras.
 const rig = new CameraRig(camera, canvas, TABLE_TOP);
+
+// Day and night.
+const dayBg = new THREE.Color(0xcfd3d6), nightBg = new THREE.Color(0x0b0f1a);
+const dayHemi = new THREE.Color(0xdfe8f5), nightHemi = new THREE.Color(0x3a4a6e);
+let nightTarget = 0;
+function applyNight(n) {
+  night = n;
+  hall.sun.intensity = THREE.MathUtils.lerp(2.2, 0.05, n);
+  hall.hemi.intensity = THREE.MathUtils.lerp(0.9, 0.18, n);
+  hall.hemi.color.copy(dayHemi).lerp(nightHemi, n);
+  hall.lamps.forEach((l) => (l.intensity = THREE.MathUtils.lerp(6, 0.5, n)));
+  scene.background.copy(dayBg).lerp(nightBg, n);
+  scene.fog.color.copy(scene.background);
+  scene.environmentIntensity = THREE.MathUtils.lerp(0.35, 0.04, n);
+  hall.backdropMat.color.setRGB(1 - n * 0.78, 1 - n * 0.72, 1 - n * 0.55);
+  for (const m of nightMaterials) m.emissiveIntensity = n * (m.userData.nightScale ?? 1.6);
+  train.headlight.intensity = THREE.MathUtils.lerp(0.35, 1.6, n);
+}
+const nightBtn = document.getElementById('nightBtn');
+function toggleNight() {
+  nightTarget = nightTarget ? 0 : 1;
+  nightBtn.textContent = nightTarget ? 'Night' : 'Day';
+  nightBtn.classList.toggle('on', !!nightTarget);
+}
+nightBtn.addEventListener('click', toggleNight);
 
 // Undo history and edits.
 const history = [];
@@ -199,6 +245,7 @@ window.addEventListener('keydown', (e) => {
     case ' ': throttleEl.value = 0; train.stop(); e.preventDefault(); break;
     case 'r': dirBtn.click(); break;
     case 'm': toggleSound(); break;
+    case 'n': toggleNight(); break;
     case 'h': if (!e.repeat) whistleOn(); break;
   }
 });
@@ -236,6 +283,9 @@ function frame(t) {
   timer.update(t);
   const dt = Math.min(timer.getDelta(), 1 / 20);
   train.update(dt);
+  world.update(dt);
+  terrain.update(dt);
+  if (night !== nightTarget) applyNight(THREE.MathUtils.clamp(night + Math.sign(nightTarget - night) * dt * 0.7, 0, 1));
   rig.update(dt, train);
   build.update(dt);
   const mph = Math.round(train.scaleMph);
@@ -253,4 +303,4 @@ frame();
 document.getElementById('loading').classList.add('done');
 
 // Handy for debugging in the console.
-window.toytrains = { scene, layout: () => layout, train, rig, renderer, camera };
+window.toytrains = { scene, layout: () => layout, train, rig, renderer, camera, terrain: () => terrain, toggleNight, commit, undo, applyNight: (n) => { nightTarget = n; applyNight(n); } };
